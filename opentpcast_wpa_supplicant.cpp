@@ -15,6 +15,34 @@
 #include <sstream>
 #include <algorithm>
 
+// Handle CRLF/CR/LF Line Endings
+auto& crlf_getline(std::istream &is, std::string &str) {
+	str.clear();
+
+	std::istream::sentry se(is, true);
+	std::streambuf *sb = is.rdbuf();
+
+	for(;;) {
+		int c = sb->sbumpc();
+
+		switch(c) {
+			case '\n':
+				// LF
+				return is;
+			case '\r':
+				// CR / CRLF
+				if(sb->sgetc() == '\n') sb->sbumpc();
+				return is;
+			case std::streambuf::traits_type::eof():
+				// No Line Ending
+				if(str.empty()) is.setstate(std::ios::eofbit);
+				return is;
+			default:
+			    str += (char)c;
+		}
+	}
+}
+
 auto getStateGPIO(int pin) {
 	auto pinstr = std::to_string(pin);
 	system(("sudo echo " + pinstr + " > /sys/class/gpio/export").c_str());
@@ -75,7 +103,7 @@ int main() {
 	std::ifstream manualwlan0("/boot/opentpcast.txt");
 	if(manualwlan0.is_open()) {
 		std::string ssid, passphrase;
-		for(std::string line; std::getline(manualwlan0 >> std::ws, line);) {
+		for(std::string line; crlf_getline(manualwlan0 >> std::ws, line);) {
 			if(line.empty() || line[0] == '#') continue;
 
 			std::istringstream lineparser(line);
