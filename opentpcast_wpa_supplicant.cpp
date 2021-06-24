@@ -100,7 +100,7 @@ int main() {
 	}
 
 	// User-defined network profile
-	std::ifstream manualwlan0("/boot/opentpcast.txt");
+	std::ifstream manualwlan0("/flash/opentpcast.txt");
 	if(manualwlan0.is_open()) {
 		std::string ssid, passphrase;
 		for(std::string line; crlf_getline(manualwlan0 >> std::ws, line);) {
